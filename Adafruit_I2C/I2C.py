@@ -1,10 +1,10 @@
+import re
+import smbus
+
 __author__ = 'Philipp Bobek'
 __copyright__ = 'Copyright (C) 2015 Philipp Bobek'
 __license__ = 'Public Domain'
 __version__ = '1.0'
-
-import re
-import smbus
 
 
 class I2C(object):
@@ -54,7 +54,7 @@ class I2C(object):
         return val
 
     def err_msg(self):
-        print "Error accessing 0x%02X: Check your I2C address" % self.address
+        print("Error accessing 0x%02X: Check your I2C address" % self.address)
         return -1
 
     def write8(self, reg, value):
@@ -62,7 +62,7 @@ class I2C(object):
         try:
             self.bus.write_byte_data(self.address, reg, value)
             if self.debug:
-                print "I2C: Wrote 0x%02X to register 0x%02X" % (value, reg)
+                print("I2C: Wrote 0x%02X to register 0x%02X" % (value, reg))
         except IOError:
             return self.err_msg()
 
@@ -71,8 +71,8 @@ class I2C(object):
         try:
             self.bus.write_word_data(self.address, reg, value)
             if self.debug:
-                print ("I2C: Wrote 0x%02X to register pair 0x%02X,0x%02X" %
-                       (value, reg, reg + 1))
+                print("I2C: Wrote 0x%02X to register pair 0x%02X,0x%02X" %
+                      (value, reg, reg + 1))
         except IOError:
             return self.err_msg()
 
@@ -81,7 +81,7 @@ class I2C(object):
         try:
             self.bus.write_byte(self.address, value)
             if self.debug:
-                print "I2C: Wrote 0x%02X" % value
+                print("I2C: Wrote 0x%02X" % value)
         except IOError:
             return self.err_msg()
 
@@ -89,8 +89,8 @@ class I2C(object):
         """Writes an array of bytes using I2C format"""
         try:
             if self.debug:
-                print "I2C: Writing list to register 0x%02X:" % reg
-                print list
+                print("I2C: Writing list to register 0x%02X:" % reg)
+                print(list)
             self.bus.write_i2c_block_data(self.address, reg, bytes_list)
         except IOError:
             return self.err_msg()
@@ -100,9 +100,8 @@ class I2C(object):
         try:
             results = self.bus.read_i2c_block_data(self.address, reg, length)
             if self.debug:
-                print ("I2C: Device 0x%02X returned the following from reg 0x%02X" %
-                       (self.address, reg))
-                print results
+                print("I2C: Device 0x%02X returned the following from reg 0x%02X" % (self.address, reg))
+                print(results)
             return results
         except IOError:
             return self.err_msg()
@@ -112,8 +111,7 @@ class I2C(object):
         try:
             result = self.bus.read_byte_data(self.address, reg)
             if self.debug:
-                print ("I2C: Device 0x%02X returned 0x%02X from reg 0x%02X" %
-                       (self.address, result & 0xFF, reg))
+                print("I2C: Device 0x%02X returned 0x%02X from reg 0x%02X" % (self.address, result & 0xFF, reg))
             return result
         except IOError:
             return self.err_msg()
@@ -125,8 +123,7 @@ class I2C(object):
             if result > 127:
                 result -= 256
             if self.debug:
-                print ("I2C: Device 0x%02X returned 0x%02X from reg 0x%02X" %
-                       (self.address, result & 0xFF, reg))
+                print("I2C: Device 0x%02X returned 0x%02X from reg 0x%02X" % (self.address, result & 0xFF, reg))
             return result
         except IOError:
             return self.err_msg()
@@ -140,7 +137,7 @@ class I2C(object):
             if not little_endian:
                 result = ((result << 8) & 0xFF00) + (result >> 8)
             if self.debug:
-                print "I2C: Device 0x%02X returned 0x%04X from reg 0x%02X" % (self.address, result & 0xFFFF, reg)
+                print("I2C: Device 0x%02X returned 0x%04X from reg 0x%02X" % (self.address, result & 0xFFFF, reg))
             return result
         except IOError:
             return self.err_msg()
@@ -159,6 +156,6 @@ class I2C(object):
 if __name__ == '__main__':
     try:
         bus = I2C(address=0)
-        print "Default I2C bus is accessible"
+        print("Default I2C bus is accessible")
     except:
-        print "Error accessing default I2C bus"
+        print("Error accessing default I2C bus")

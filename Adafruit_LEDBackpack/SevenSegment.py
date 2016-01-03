@@ -1,9 +1,9 @@
+from Adafruit_LEDBackpack.LEDBackpack import LEDBackpack
+
 __author__ = 'Philipp Bobek'
 __copyright__ = 'Copyright (C) 2015 Philipp Bobek'
 __license__ = 'Public Domain'
 __version__ = '1.0'
-
-from Adafruit_LEDBackpack.LEDBackpack import LEDBackpack
 
 
 class SevenSegment:
@@ -12,7 +12,7 @@ class SevenSegment:
 
     def __init__(self, address=0x70, debug=False):
         if debug:
-            print "Initializing a new instance of LEDBackpack at 0x%02X" % address
+            print("Initializing a new instance of LEDBackpack at 0x%02X" % address)
         self.display = LEDBackpack(address=address, debug=debug)
 
     def write_digit_raw(self, char_number, value):

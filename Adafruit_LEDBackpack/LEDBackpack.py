@@ -1,10 +1,10 @@
+from copy import copy
+from Adafruit_I2C.I2C import I2C
+
 __author__ = 'Philipp Bobek'
 __copyright__ = 'Copyright (C) 2015 Philipp Bobek'
 __license__ = 'Public Domain'
 __version__ = '1.0'
-
-from copy import copy
-from Adafruit_I2C.I2C import I2C
 
 
 class LEDBackpack:
