@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+
 import argparse
 import re
 import requests
@@ -9,10 +10,17 @@ from requests.exceptions import ConnectionError
 from Adafruit_LEDBackpack.SevenSegment import SevenSegment
 from digits import Digits
 
+
 __author__ = 'Philipp Bobek'
 __copyright__ = 'Copyright (C) 2015 Philipp Bobek'
 __license__ = 'Public Domain'
 __version__ = '1.0'
+
+
+GPIO_BUTTON = 15
+GPIO_WIRE = 27
+GPIO_LED_1 = 10
+GPIO_LED_2 = 7
 
 
 def parse_args():
@@ -74,18 +82,49 @@ def check_arguments(arguments):
         exit()
 
 
+def setup_display(verbose, brightness, blink_rate):
+    segment = SevenSegment(0x70, verbose)
+    segment.display.set_brightness(brightness)
+    segment.display.set_blink_rate(blink_rate)
+    return segment
+
+
+def setup_gpio():
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(GPIO_BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(GPIO_WIRE, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(GPIO_LED_1, GPIO.OUT)
+    GPIO.setup(GPIO_LED_2, GPIO.OUT)
+
+
+def wait_for_wire_setup():
+    try:
+        print("Wait for wire setup")
+        if GPIO.input(GPIO_WIRE):
+            GPIO.wait_for_edge(GPIO_WIRE, GPIO.FALLING)
+        print("Wire setup detected")
+    except RuntimeError as exception:
+        print("An exception occurred while waiting for an edge")
+        print(repr(exception))
+        wait_for_wire_setup()
+
+
 def wait_for_button_press_and_release():
     try:
         print("Wait for button press")
-        GPIO.wait_for_edge(4, GPIO.FALLING)
+        GPIO.wait_for_edge(GPIO_BUTTON, GPIO.FALLING)
         print("Button press detected")
         print("Wait for button release")
-        GPIO.wait_for_edge(4, GPIO.RISING)
+        GPIO.wait_for_edge(GPIO_BUTTON, GPIO.RISING)
         print("Button release detected")
     except RuntimeError as exception:
         print("An exception occurred while waiting for an edge")
         print(repr(exception))
         wait_for_button_press_and_release()
+
+
+def is_wire_cut():
+    return GPIO.input(GPIO_WIRE)
 
 
 def get_digits(time_in_seconds):
@@ -98,6 +137,14 @@ def get_digits(time_in_seconds):
     digit_four = seconds % 10
 
     return Digits(digit_one, digit_two, digit_three, digit_four)
+
+
+def set_digits(segment, digit_one, digit_two, digit_three, digit_four):
+    segment.write_digit(0, digit_one)
+    segment.write_digit(1, digit_two)
+    segment.write_digit(3, digit_three)
+    segment.write_digit(4, digit_four)
+    segment.set_colon(True)
 
 
 def call_url(url):
@@ -117,36 +164,31 @@ def main():
     args = parse_args()
     check_arguments(args)
 
-    segment = SevenSegment(0x70, args.verbose)
-    segment.display.set_brightness(args.brightness)
-    segment.display.set_blink_rate(args.blink_rate)
-
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(4, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(14, GPIO.OUT)
-    GPIO.setup(15, GPIO.OUT)
-    GPIO.output(15, True)
+    segment = setup_display(args.verbose, args.brightness, args.blink_rate)
+    setup_gpio()
 
     print("Press CTRL+C to exit")
 
     while True:
 
+        GPIO.output(GPIO_LED_1, True)
+        GPIO.output(GPIO_LED_2, False)
+        wait_for_wire_setup()
+        GPIO.output(GPIO_LED_2, True)
         wait_for_button_press_and_release()
 
         seconds_left = args.time
         while seconds_left >= 0:
-            digits = get_digits(seconds_left)
 
+            if is_wire_cut():
+                break
+
+            digits = get_digits(seconds_left)
             if args.verbose:
                 print(str(digits.one) + str(digits.two) + ":" + str(digits.three) + str(digits.four))
+            set_digits(segment, digits.one, digits.two, digits.three, digits.four)
 
-            segment.write_digit(0, digits.one)
-            segment.write_digit(1, digits.two)
-            segment.write_digit(3, digits.three)
-            segment.write_digit(4, digits.four)
-            segment.set_colon(True)
-
-            GPIO.output(14, seconds_left % 2 == 0)
+            GPIO.output(GPIO_LED_2, seconds_left % 2 == 0)
 
             # todo: beep
 
@@ -160,4 +202,6 @@ if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
+        print("Keyboard Interrupt detected. Exit program.")
+    finally:
         GPIO.cleanup()
