@@ -4,6 +4,7 @@
 import argparse
 import re
 import requests
+import pygame
 import RPi.GPIO as GPIO
 from time import sleep
 from requests.exceptions import ConnectionError
@@ -97,6 +98,15 @@ def setup_gpio():
     GPIO.setup(GPIO_LED_2, GPIO.OUT)
 
 
+def setup_mixer():
+    try:
+        pygame.mixer.init()
+        pygame.mixer.music.load("beep.wav")
+    except pygame.error as exception:
+        print("An exception occurred while setup the mixer")
+        print(repr(exception))
+
+
 def wait_for_wire_setup():
     try:
         print("Wait for wire setup")
@@ -147,6 +157,14 @@ def set_digits(segment, digit_one, digit_two, digit_three, digit_four):
     segment.set_colon(True)
 
 
+def beep():
+    try:
+        pygame.mixer.music.play()
+    except pygame.error as exception:
+        print("An exception occurred while playing a sound")
+        print(repr(exception))
+
+
 def call_url(url):
     try:
         response = requests.get(url)
@@ -166,6 +184,7 @@ def main():
 
     segment = setup_display(args.verbose, args.brightness, args.blink_rate)
     setup_gpio()
+    setup_mixer()
 
     print("Press CTRL+C to exit")
 
@@ -190,7 +209,7 @@ def main():
 
             GPIO.output(GPIO_LED_2, seconds_left % 2 == 0)
 
-            # todo: beep
+            beep()
 
             seconds_left -= 1
             sleep(1)
